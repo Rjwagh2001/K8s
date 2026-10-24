@@ -42,6 +42,13 @@ This folder is where the Kubernetes manifest used in this lab will be stored.
 
 `kubectl` is the command-line client used to query and manage a Kubernetes cluster.
 
+### Official documentation
+
+- [Install and Set Up kubectl on Windows — Kubernetes documentation](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)
+- [Install kubectl binary on Windows via direct download or curl](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/#install-kubectl-binary-on-windows-via-direct-download-or-curl)
+
+> **Note:** Check the official Kubernetes documentation first for the latest installation instructions and supported versions. The commands below record the steps used in this lab.
+
 ### Download the Windows binary
 
 This example installs the `v1.37.0` client, matching the Kubernetes version used in this lab.
@@ -109,6 +116,12 @@ kubectl version --client
 ## 3. Install Minikube
 
 Minikube creates a Kubernetes cluster for local development and learning.
+
+### Official documentation
+
+- [Minikube — Get Started](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download)
+
+> **Note:** Use the official Minikube guide to check the latest download option and installation instructions for your Windows architecture. The commands below document the approach used in this lab.
 
 ### Download Minikube
 
