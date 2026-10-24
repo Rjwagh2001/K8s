@@ -1,0 +1,17 @@
+# Secrets and local machine configuration
+*.pem
+*.key
+.env
+.env.*
+.kube/
+.minikube/
+.kubeconfig
+kubeconfig
+credentials
+.aws/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
