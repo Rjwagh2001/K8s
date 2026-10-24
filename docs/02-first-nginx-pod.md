@@ -2,12 +2,12 @@
 
 ## Goal
 
-Create a Pod running NGINX, inspect it, and verify that the web server
-returns HTTP content.
+Create a Pod running NGINX, inspect its status, and verify that it
+serves HTTP.
 
-## Create the Pod
+## 1. Create a Pod
 
-The first run used the imperative command:
+Command used:
 
 ``` bash
 kubectl run nginx-pod --image=nginx:alpine
@@ -19,7 +19,11 @@ Expected response:
 pod/nginx-pod created
 ```
 
-Inspect it:
+This command creates a standalone Pod, not a Deployment.
+
+## 2. Verify the Pod
+
+Commands used:
 
 ``` bash
 kubectl get pods
@@ -27,94 +31,70 @@ kubectl get pods -o wide
 kubectl describe pod nginx-pod
 ```
 
-Observed successful state:
+Observed result:
 
--   Pod: `nginx-pod`
+-   Name: `nginx-pod`
 -   Namespace: `default`
 -   Status: `Running`
 -   Ready: `1/1`
 -   Restart count: `0`
 -   Image: `nginx:alpine`
--   Pod IP observed in this run: `10.244.0.3`
+-   Pod IP during this run: `10.244.0.3`
 
-Pod IPs can change when Pods are recreated; do not hard-code this IP in
-application configuration.
+The Pod IP is temporary and can change when a Pod is recreated.
 
-## Understand the lifecycle
+## 3. Understand the events
 
-1.  `kubectl` submits the request to the Kubernetes API server.
-2.  Kubernetes records the desired Pod specification.
-3.  The scheduler assigns the Pod to a node.
-4.  The node's kubelet asks its container runtime to pull the image and
-    start the container.
-5.  Kubernetes reports the Pod and container status.
+The `describe` output showed these events:
 
-Useful `describe` events include `Scheduled`, `Pulling`, `Pulled`,
-`Created`, and `Started`. These events help explain what Kubernetes did.
+-   `Scheduled` --- the scheduler assigned the Pod to the Minikube node.
+-   `Pulling` / `Pulled` --- Kubernetes fetched the `nginx:alpine`
+    image.
+-   `Created` --- the container was created.
+-   `Started` --- the container process started.
 
-## Test NGINX through port forwarding
+`Ready: True` means Kubernetes considered the container ready at that
+time.
 
-In one EC2 SSH terminal:
+## 4. Test HTTP using port-forward
+
+In one SSH terminal on EC2:
 
 ``` bash
 kubectl port-forward pod/nginx-pod 8080:80
 ```
 
-Keep this command running. In a second SSH session to the same EC2
+Keep the command running. In a second SSH session to the same EC2
 instance:
 
 ``` bash
 curl http://127.0.0.1:8080
 ```
 
-Success criteria: the response includes `Welcome to nginx!`.
+Observed result: HTML containing `Welcome to nginx!`.
 
-Port mapping format:
+Port-forwarding maps local port `8080` to port `80` on the Pod for as
+long as the command runs. It is temporary and does not create a Service
+or make NGINX publicly available.
 
-``` text
-8080:80
-  │   └── port 80 inside the Pod
-  └────── local port 8080 on the machine running kubectl
-```
+Stop it using `Ctrl+C` in the port-forward terminal.
 
-Port forwarding is temporary and normally listens on loopback by
-default. It is useful for development and troubleshooting, not a
-permanent public access method.
+## 5. Recreate the Pod from YAML
 
-Stop it with `Ctrl+C` in the port-forward terminal.
+The reusable manifest is `manifests/nginx-pod.yaml`.
 
-## Inspect logs
-
-``` bash
-kubectl logs nginx-pod
-```
-
-NGINX access logs appear after requests are sent. The exact output
-depends on the requests made.
-
-## Reusable YAML manifest
-
-The file `../manifests/nginx-pod.yaml` defines the Pod declaratively.
-Apply it with:
+From the repository root, on a machine whose `kubectl` points at the
+intended cluster:
 
 ``` bash
 kubectl apply -f manifests/nginx-pod.yaml
+kubectl get pod nginx-pod -o wide
 ```
 
-Check the result:
+The YAML and imperative command describe the same named Pod. If it
+already exists, `kubectl apply` reconciles it against the manifest.
 
-``` bash
-kubectl get -f manifests/nginx-pod.yaml
-kubectl describe -f manifests/nginx-pod.yaml
-```
-
-A standalone Pod is useful for learning, but real applications are
-commonly managed by a Deployment so Kubernetes can maintain the desired
-number of replicas and support controlled updates.
-
-## Troubleshooting checklist
-
-If the Pod is not `Running`:
+## 6. Troubleshooting
 
 ``` bash
 kubectl get pods -o wide
@@ -123,24 +103,21 @@ kubectl get events --sort-by=.metadata.creationTimestamp
 kubectl logs nginx-pod
 ```
 
-Use `kubectl logs` if the container has started and produced logs. For a
-container that repeatedly crashes, try:
+If the container restarted and a previous instance exists:
 
 ``` bash
 kubectl logs nginx-pod --previous
 ```
 
-`--previous` only helps when a previous container instance exists.
+## 7. Cleanup
 
-## Cleanup
-
-Delete the Pod when you want to repeat the exercise:
+When you are ready to remove this Pod:
 
 ``` bash
 kubectl delete pod nginx-pod
 ```
 
-Or, if you created it from the manifest:
+Or delete it using the manifest:
 
 ``` bash
 kubectl delete -f manifests/nginx-pod.yaml
@@ -152,4 +129,5 @@ Verify:
 kubectl get pods
 ```
 
-Do not run cleanup until you are ready to remove the workload.
+A Pod managed by a Deployment should generally be managed through the
+Deployment, rather than manually deleting individual replicas.
