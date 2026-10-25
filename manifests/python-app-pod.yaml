@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: python-app-test
+  labels:
+    app: python-app-test
+spec:
+  containers:
+    - name: python-app
+      image: shreesakhii/python-web-app:v2
+      ports:
+        - containerPort: 8000
